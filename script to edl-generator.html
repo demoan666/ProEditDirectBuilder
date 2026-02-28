@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDL Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0a; color: #e0e0e0; font-family: 'IBM Plex Mono', monospace; font-size: 12px; min-height: 100vh; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #111; } ::-webkit-scrollbar-thumb { background: #333; }
+  header { padding: 20px 28px; border-bottom: 1px solid #1e1e1e; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  header .title { color: #e8ff00; font-weight: 600; letter-spacing: 0.15em; font-size: 11px; text-transform: uppercase; }
+  header .sub { color: #444; font-size: 10px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 57px); }
+  .panel { padding: 24px 28px; border-right: 1px solid #1a1a1a; overflow-y: auto; }
+  .panel:last-child { border-right: none; }
+  .label { color: #555; letter-spacing: 0.15em; font-size: 10px; text-transform: uppercase; margin-bottom: 14px; }
+  .settings { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .field label { display: block; color: #555; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 5px; }
+  .field input { background: #111; border: 1px solid #222; color: #e0e0e0; font-family: inherit; font-size: 12px; padding: 7px 10px; border-radius: 2px; width: 110px; }
+  .field input:focus { outline: 2px solid #e8ff00; outline-offset: -2px; }
+
+  /* Dropzone */
+  .dropzone { border: 1px dashed #2a2a2a; padding: 20px; text-align: center; cursor: pointer; border-radius: 2px; transition: border-color 0.15s; position: relative; }
+  .dropzone:hover, .dropzone.drag-over { border-color: #e8ff00; background: rgba(232,255,0,0.02); }
+  .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .dropzone .dz-icon { font-size: 16px; color: #333; margin-bottom: 5px; }
+  .dropzone .dz-text { color: #555; font-size: 11px; }
+  .dropzone .dz-badges { display: flex; gap: 6px; justify-content: center; margin-top: 7px; }
+  .badge { padding: 2px 7px; border: 1px solid #2a2a2a; border-radius: 2px; font-size: 9px; letter-spacing: 0.1em; color: #555; }
+  .badge.hi { border-color: #e8ff00; color: #e8ff00; }
+  .file-name { color: #e8ff00; font-size: 11px; min-height: 16px; margin-top: 7px; }
+
+  /* Timecode hint row */
+  .hint-row { display: flex; gap: 10px; align-items: flex-end; margin: 14px 0 4px; }
+  .hint-row .field { flex: 1; }
+  .hint-row .field input { width: 100%; }
+  .hint-status { font-size: 10px; margin-top: 4px; min-height: 14px; }
+  .hint-status.ok   { color: #00cc66; }
+  .hint-status.fail { color: #ff4444; }
+  .hint-status.idle { color: #555; }
+
+  .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: #333; font-size: 10px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #1a1a1a; }
+  textarea.script-input { width: 100%; min-height: 180px; background: #0d0d0d; border: 1px solid #1e1e1e; color: #ccc; font-family: inherit; font-size: 11px; line-height: 1.7; padding: 12px; border-radius: 2px; resize: vertical; }
+  textarea.script-input:focus { outline: 2px solid #e8ff00; outline-offset: -2px; }
+  textarea.edl-output { width: 100%; min-height: 280px; background: #050505; border: 1px solid #1a1a1a; color: #7fff7f; font-family: inherit; font-size: 11px; line-height: 1.7; padding: 12px; border-radius: 2px; resize: vertical; }
+  .btn-generate { width: 100%; margin-top: 14px; padding: 12px; background: #e8ff00; color: #000; border: none; font-family: inherit; font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: background 0.15s; }
+  .btn-generate:hover { background: #c8dd00; }
+  .actions { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-action { flex: 1; padding: 10px; background: transparent; border: 1px solid #2a2a2a; color: #e0e0e0; font-family: inherit; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.15s; }
+  .btn-action:hover { border-color: #e8ff00; color: #e8ff00; }
+  .btn-action:disabled { color: #333; border-color: #1a1a1a; cursor: not-allowed; }
+  .status { margin-top: 10px; font-size: 11px; min-height: 18px; line-height: 1.5; }
+  .status.error { color: #ff4444; } .status.success { color: #00cc66; } .status.info { color: #888; } .status.warn { color: #ffaa00; }
+  .detected-format { margin-top: 5px; font-size: 10px; color: #555; }
+  .detected-format span { color: #e8ff00; }
+  .cuts-wrap { margin-top: 16px; border: 1px solid #1a1a1a; border-radius: 2px; overflow: hidden; display: none; }
+  .cuts-header { padding: 7px 12px; background: #111; border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; color: #555; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .cuts-list { max-height: 220px; overflow-y: auto; }
+  .cut-row { display: grid; grid-template-columns: 36px 70px 70px 1fr; border-bottom: 1px solid #111; }
+  .cut-row span { padding: 5px 8px; border-right: 1px solid #111; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cut-row span:last-child { border-right: none; color: #555; }
+  .cut-row .num { color: #444; } .cut-row .tc { color: #e8ff00; }
+  .cut-row.deleted { background: rgba(255,68,68,0.05); }
+  .cut-row.deleted .tc { color: #ff5555; }
+  .cut-row.deleted span:last-child { color: #ff5555; opacity: 0.6; }
+  .formats-ref { margin-top: 16px; border: 1px solid #1a1a1a; border-radius: 2px; overflow: hidden; }
+  .formats-ref summary { padding: 8px 12px; background: #111; color: #555; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; list-style: none; display: flex; justify-content: space-between; user-select: none; }
+  .formats-ref summary::after { content: '▾'; }
+  .formats-ref[open] summary::after { content: '▴'; }
+  .fmt-row { display: grid; grid-template-columns: 140px 1fr; border-bottom: 1px solid #111; }
+  .fmt-row:last-child { border-bottom: none; }
+  .fmt-row span { padding: 5px 10px; font-size: 10px; }
+  .fmt-row .example { color: #e8ff00; border-right: 1px solid #111; }
+  .fmt-row .desc { color: #555; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="title">EDL Generator</span>
+  <span class="sub">Storyboard → Premiere Pro Edit Decision List</span>
+</header>
+
+<div class="grid">
+  <!-- LEFT -->
+  <div class="panel">
+    <div class="label">01 — Settings</div>
+    <div class="settings">
+      <div class="field"><label>Source Clip Name</label><input type="text" id="clipName" value="AX" /></div>
+      <div class="field"><label>Framerate (fps)</label><input type="number" id="fps" value="29.2477" step="0.0001" /></div>
+      <div class="field"><label>EDL Title</label><input type="text" id="edlTitle" value="EDIT" /></div>
+    </div>
+
+    <div class="label">02 — Upload or Paste Script</div>
+
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".docx,.doc,.txt" />
+      <div class="dz-icon">↑</div>
+      <div class="dz-text">Drop file here or click to browse</div>
+      <div class="dz-badges">
+        <span class="badge hi">.docx</span>
+        <span class="badge hi">.doc</span>
+        <span class="badge">.txt</span>
+      </div>
+    </div>
+    <div class="file-name" id="fileName"></div>
+
+    <!-- ── TIMECODE HINT FIELD ── -->
+    <div class="hint-row">
+      <div class="field" style="flex:1">
+        <label>Timecode format hint <span style="color:#333;font-weight:normal">(optional — paste an example from your doc)</span></label>
+        <input type="text" id="tcHint" placeholder="e.g.  01:22  or  1m22s  or  0.13" oninput="onHintInput()" autocomplete="off" style="width:100%" />
+      </div>
+    </div>
+    <div class="hint-status idle" id="hintStatus">Leave blank to auto-detect</div>
+
+    <div class="divider">OR PASTE TEXT DIRECTLY</div>
+
+    <textarea class="script-input" id="pasteArea" placeholder="Paste storyboard text here...
+
+Any format works — or paste a hint above if yours is unusual."></textarea>
+
+    <button class="btn-generate" onclick="generate()">Generate EDL</button>
+    <div class="status" id="status"></div>
+    <div class="detected-format" id="detectedFormat"></div>
+
+    <details class="formats-ref">
+      <summary>Built-in supported formats</summary>
+      <div>
+        <div class="fmt-row"><span class="example">0:13 – 0:22</span><span class="desc">M:SS standard</span></div>
+        <div class="fmt-row"><span class="example">00:13 – 00:22</span><span class="desc">MM:SS zero-padded</span></div>
+        <div class="fmt-row"><span class="example">1:22:05</span><span class="desc">H:MM:SS with hours</span></div>
+        <div class="fmt-row"><span class="example">00:01:22:05</span><span class="desc">HH:MM:SS:FF SMPTE</span></div>
+        <div class="fmt-row"><span class="example">0:13.5 – 0:22.0</span><span class="desc">Decimal seconds</span></div>
+        <div class="fmt-row"><span class="example">1.22 – 2.10</span><span class="desc">Dot separator (M.SS)</span></div>
+        <div class="fmt-row"><span class="example">1m22s – 2m10s</span><span class="desc">Written m/s</span></div>
+        <div class="fmt-row"><span class="example">1min22sec</span><span class="desc">Written min/sec</span></div>
+        <div class="fmt-row"><span class="example">83s – 130s</span><span class="desc">Seconds only</span></div>
+        <div class="fmt-row"><span class="example">0013 – 0122</span><span class="desc">4-digit MMSS no separator</span></div>
+        <div class="fmt-row"><span class="example">13 – 83</span><span class="desc">Bare integers (seconds)</span></div>
+      </div>
+    </details>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="panel">
+    <div class="label">03 — EDL Output</div>
+    <textarea class="edl-output" id="edlOutput" readonly placeholder="EDL will appear here...
+
+Import into Premiere Pro:
+File → Import → select your .edl file"></textarea>
+    <div class="actions">
+      <button class="btn-action" id="copyBtn" onclick="copyEDL()" disabled>Copy</button>
+      <button class="btn-action" id="downloadBtn" onclick="downloadEDL()" disabled>Download .edl</button>
+    </div>
+    <div class="status" id="outputStatus"></div>
+    <div class="cuts-wrap" id="cutsWrap">
+      <div class="cuts-header">
+        <span>Parsed Segments</span>
+        <span id="cutCount"></span>
+      </div>
+      <div class="cuts-list" id="cutsList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── File handling ────────────────────────────────────────────
+  const dropzone = document.getElementById('dropzone');
+  dropzone.addEventListener('dragover',  e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+  dropzone.addEventListener('drop', e => { e.preventDefault(); dropzone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+  document.getElementById('fileInput').addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+  function handleFile(file) {
+    const name = file.name.toLowerCase();
+    document.getElementById('fileName').textContent = '📄 ' + file.name;
+    setStatus('Reading file...', 'info');
+    if (name.endsWith('.docx') || name.endsWith('.doc')) {
+      const reader = new FileReader();
+      reader.onload = e => mammoth.extractRawText({ arrayBuffer: e.target.result })
+        .then(r => { document.getElementById('pasteArea').value = r.value; setStatus('✓ DOCX extracted — ready to generate.', 'success'); })
+        .catch(e => setStatus('Failed to read DOCX: ' + e.message, 'error'));
+      reader.readAsArrayBuffer(file);
+    } else if (name.endsWith('.txt')) {
+      const reader = new FileReader();
+      reader.onload = e => { document.getElementById('pasteArea').value = e.target.result; setStatus('✓ TXT loaded — ready to generate.', 'success'); };
+      reader.readAsText(file);
+    } else {
+      setStatus('Unsupported file type.', 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // TIMECODE HINT → derive a custom parser from a pasted example
+  // ═══════════════════════════════════════════════════════════
+  let customParser = null; // set when hint is valid
+
+  function onHintInput() {
+    const hint = document.getElementById('tcHint').value.trim();
+    const statusEl = document.getElementById('hintStatus');
+
+    if (!hint) {
+      customParser = null;
+      statusEl.className = 'hint-status idle';
+      statusEl.textContent = 'Leave blank to auto-detect';
+      return;
+    }
+
+    const result = buildCustomParser(hint);
+    if (result) {
+      customParser = result.parser;
+      statusEl.className = 'hint-status ok';
+      statusEl.textContent = '✓ Recognised as: ' + result.label + '  →  ' + result.secs.toFixed(2) + 's';
+    } else {
+      customParser = null;
+      statusEl.className = 'hint-status fail';
+      statusEl.textContent = '✗ Format not recognised — will fall back to auto-detect';
+    }
+  }
+
+  // Given a single TC example string, figure out how to parse it
+  // Returns { parser: fn(str)->seconds|null, label, secs } or null
+  function buildCustomParser(example) {
+    const s = example.trim();
+
+    // Try every known parser; whichever succeeds defines the structure
+    const result = parseTC(s);
+    if (result) {
+      // We know the format — just reuse parseTC (it already covers it)
+      return { parser: str => { const r = parseTC(str.trim()); return r ? r.secs : null; }, label: result.fmt, secs: result.secs };
+    }
+
+    // Unknown exotic format — attempt to generalise from the shape
+    // Strategy: replace digit runs with \d+ and escape the rest, build a regex
+    // Then figure out what the groups mean positionally
+    const escaped = s
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // escape regex chars first
+      .replace(/\\\d+/g, '(\\d+)');            // un-escape digit runs as capture groups
+
+    // Count capture groups
+    const groupCount = (escaped.match(/\(\\d\+\)/g) || []).length;
+    if (groupCount === 0 || groupCount > 4) return null;
+
+    // Extract the actual digit values to infer meaning
+    const digits = s.match(/\d+/g).map(Number);
+
+    // Heuristic: assign groups by magnitude/position
+    // Most common exotic: single number (seconds), two numbers (M SS or H MM), three (H MM SS)
+    let inferFn;
+    if (digits.length === 1) {
+      inferFn = d => d[0]; // raw seconds
+    } else if (digits.length === 2) {
+      // Could be M:SS, H:MM, or similar — if second ≤ 59 treat as M:SS
+      inferFn = d => d[1] <= 59 ? d[0]*60 + d[1] : d[0]*3600 + d[1]*60;
+    } else if (digits.length === 3) {
+      inferFn = d => d[0]*3600 + d[1]*60 + d[2];
+    } else {
+      inferFn = d => d[0]*3600 + d[1]*60 + d[2]; // ignore frames (d[3])
+    }
+
+    try {
+      const re = new RegExp('^' + escaped + '$');
+      const testSecs = inferFn(digits);
+      // Verify our regex matches the example itself
+      if (!re.test(s)) return null;
+      return {
+        parser: str => {
+          const m = str.trim().match(re);
+          if (!m) return null;
+          return inferFn(m.slice(1).map(Number));
+        },
+        label: 'Custom (' + groupCount + '-group pattern)',
+        secs: testSecs
+      };
+    } catch(e) {
+      return null;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // BUILT-IN TIMECODE PARSER
+  // ═══════════════════════════════════════════════════════════
+  function parseTC(raw) {
+    const s = raw.trim();
+    let m;
+
+    // HH:MM:SS:FF  SMPTE full
+    m = s.match(/^(\d{1,2}):(\d{2}):(\d{2}):(\d{2})$/);
+    if (m) return { secs: +m[1]*3600 + +m[2]*60 + +m[3], fmt: 'SMPTE HH:MM:SS:FF' };
+
+    // H:MM:SS or HH:MM:SS
+    m = s.match(/^(\d{1,2}):(\d{2}):(\d{2}(?:\.\d+)?)$/);
+    if (m) return { secs: +m[1]*3600 + +m[2]*60 + parseFloat(m[3]), fmt: 'H:MM:SS' };
+
+    // M:SS or MM:SS  (most common)
+    m = s.match(/^(\d{1,2}):(\d{2}(?:\.\d+)?)$/);
+    if (m) return { secs: +m[1]*60 + parseFloat(m[2]), fmt: 'M:SS' };
+
+    // M.SS  dot separator
+    m = s.match(/^(\d{1,2})\.(\d{2})$/);
+    if (m) return { secs: +m[1]*60 + +m[2], fmt: 'M.SS (dot)' };
+
+    // Written: 1h2m3s / 1hr2min3sec variants
+    m = s.match(/^(?:(\d+)\s*(?:h|hr|hrs|hour|hours))?\s*(?:(\d+)\s*(?:m|min|mins|minute|minutes))?\s*(?:(\d+(?:\.\d+)?)\s*(?:s|sec|secs|second|seconds))?$/i);
+    if (m && (m[1]||m[2]||m[3])) return { secs: (+m[1]||0)*3600 + (+m[2]||0)*60 + parseFloat(m[3]||0), fmt: 'Written (1m22s)' };
+
+    // Bare seconds with unit
+    m = s.match(/^(\d+(?:\.\d+)?)\s*(?:s|sec|secs|second|seconds)$/i);
+    if (m) return { secs: parseFloat(m[1]), fmt: 'Seconds (83s)' };
+
+    // 4-digit MMSS  e.g. 0122
+    m = s.match(/^(\d{2})(\d{2})$/);
+    if (m) return { secs: +m[1]*60 + +m[2], fmt: '4-digit MMSS' };
+
+    // Bare integer or decimal
+    m = s.match(/^(\d+(?:\.\d+)?)$/);
+    if (m) return { secs: parseFloat(m[1]), fmt: 'Raw seconds' };
+
+    return null;
+  }
+
+  // Resolve a TC token using custom parser first, built-in second
+  function resolveTC(token) {
+    if (customParser) {
+      const secs = customParser(token);
+      if (secs !== null && !isNaN(secs)) return { secs, fmt: 'Custom hint' };
+    }
+    return parseTC(token);
+  }
+
+  // ── Script parser ────────────────────────────────────────────
+  const SEP    = String.raw`\s*(?:–|—|-{1,2}|to|→|~|\/)\s*`;
+  const TC_TOK = String.raw`([\d][^\s–—\-→~\/]{0,15})`;
+  const LINE_RE = new RegExp(TC_TOK + SEP + TC_TOK + String.raw`\s*(.*)`, 'g');
+
+  function parseScript(text) {
+    const cuts = [];
+    let m;
+    LINE_RE.lastIndex = 0;
+    while ((m = LINE_RE.exec(text)) !== null) {
+      const startR = resolveTC(m[1]);
+      const endR   = resolveTC(m[2]);
+      if (!startR || !endR) continue;
+      if (endR.secs <= startR.secs) continue;
+      const note    = m[3].replace(/[|\t]+/g,' ').trim().replace(/\s+/g,' ').substring(0,100);
+      const deleted = /^\s*delete/i.test(note);
+      cuts.push({ start: startR.secs, end: endR.secs, note, deleted, fmt: startR.fmt });
+    }
+    return cuts;
+  }
+
+  // ── EDL builder ──────────────────────────────────────────────
+  function secondsToTC(secs, fps) {
+    const rf = Math.round(fps), tf = Math.round(secs * fps);
+    const fr = tf % rf, s = Math.floor(tf / rf);
+    return [Math.floor(s/3600), Math.floor(s/60)%60, s%60, fr].map(n=>String(n).padStart(2,'0')).join(':');
+  }
+
+  function buildEDL(cuts, fps, title, clipName) {
+    let lines = ['TITLE: '+title, 'FCM: NON-DROP FRAME', ''], rec = 0;
+    cuts.forEach((cut,i) => {
+      const dur = cut.end-cut.start, ro = rec+dur;
+      lines.push(String(i+1).padStart(3,'0')+'  '+clipName.padEnd(8)+' V     C        '+
+        secondsToTC(cut.start,fps)+' '+secondsToTC(cut.end,fps)+' '+secondsToTC(rec,fps)+' '+secondsToTC(ro,fps));
+      if (cut.note) lines.push('* FROM CLIP NAME: '+cut.note);
+      lines.push('');
+      rec = ro;
+    });
+    return lines.join('\n');
+  }
+
+  // ── Generate ─────────────────────────────────────────────────
+  function generate() {
+    const text = document.getElementById('pasteArea').value.trim();
+    if (!text) { setStatus('Upload a file or paste your script first.', 'error'); return; }
+
+    const fps      = parseFloat(document.getElementById('fps').value)  || 29.2477;
+    const clipName = document.getElementById('clipName').value.trim()  || 'AX';
+    const edlTitle = document.getElementById('edlTitle').value.trim()  || 'EDIT';
+
+    const allCuts  = parseScript(text);
+    if (!allCuts.length) { setStatus('No timecodes found. Try pasting a format hint above.', 'error'); return; }
+
+    const keepCuts = allCuts.filter(c => !c.deleted);
+    if (!keepCuts.length) { setStatus('All segments marked Delete — nothing to export.', 'warn'); return; }
+
+    document.getElementById('edlOutput').value = buildEDL(keepCuts, fps, edlTitle, clipName);
+    document.getElementById('copyBtn').disabled = document.getElementById('downloadBtn').disabled = false;
+
+    // Show dominant format detected
+    const fmtCounts = {};
+    allCuts.forEach(c => fmtCounts[c.fmt] = (fmtCounts[c.fmt]||0)+1);
+    const dominant = Object.entries(fmtCounts).sort((a,b)=>b[1]-a[1]).map(e=>e[0]).join(', ');
+    document.getElementById('detectedFormat').innerHTML = 'Detected: <span>'+dominant+'</span>';
+
+    setStatus('✓ '+keepCuts.length+' cuts — '+(allCuts.length-keepCuts.length)+' deleted skipped', 'success', 'outputStatus');
+    setStatus('', 'info');
+    renderPreview(allCuts);
+  }
+
+  // ── Preview ──────────────────────────────────────────────────
+  function renderPreview(cuts) {
+    const fmt = s => Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+    const list = document.getElementById('cutsList');
+    document.getElementById('cutCount').textContent = cuts.length+' segments';
+    list.innerHTML = '';
+    cuts.forEach((c,i) => {
+      const row = document.createElement('div');
+      row.className = 'cut-row'+(c.deleted?' deleted':'');
+      row.innerHTML = '<span class="num">'+String(i+1).padStart(3,'0')+'</span>'+
+        '<span class="tc">'+fmt(c.start)+'</span><span class="tc">'+fmt(c.end)+'</span>'+
+        '<span>'+(c.deleted?'⊘ ':'')+(c.note||'—')+'</span>';
+      list.appendChild(row);
+    });
+    document.getElementById('cutsWrap').style.display = 'block';
+  }
+
+  // ── Utilities ────────────────────────────────────────────────
+  function setStatus(msg, type, elId) {
+    const el = document.getElementById(elId||'status');
+    el.textContent = msg; el.className = 'status '+(type||'info');
+  }
+  function copyEDL() {
+    navigator.clipboard.writeText(document.getElementById('edlOutput').value);
+    setStatus('Copied.','success','outputStatus');
+  }
+  function downloadEDL() {
+    const text = document.getElementById('edlOutput').value;
+    const title = document.getElementById('edlTitle').value.trim()||'edit';
+    const a = document.createElement('a');
+    a.href = 'data:text/plain;charset=utf-8,'+encodeURIComponent(text);
+    a.download = title+'.edl'; a.click();
+  }
+</script>
+</body>
+</html>
