@@ -38,31 +38,31 @@ Click Choose Video to link your footage. You can verify the file metadata in the
 
 Click Choose File to upload your script. Once loaded, the tool displays the row count and format type in the parsing status box (3).
 
-<img src="assets/screenshots/help02.jpg" width="600" alt="Upload Script">
+<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Upload Script">
 
 3. Configure Exclusions & Handles
 
 Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) to add padding to every cut.
 
-<img src="assets/screenshots/help03.jpg" width="600" alt="Configure Exclusions and Handles">
+<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Configure Exclusions and Handles">
 
 4. Text Extraction Settings
 
 Enter the exact column name or Extraction Keyword (7) from your script. Choose whether to generate markers, an SRT file, or both for your overlay text.
 
-<img src="assets/screenshots/help04.jpg" width="600" alt="Set Extraction Keywords">
+<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Set Extraction Keywords">
 
 5. Review the Editable Preview
 
 Verify all cuts in the Editable Preview (9). You can change the In/Out points or edit the SRT text directly in the grid before building.
 
-<img src="assets/screenshots/help05.jpg" width="600" alt="Preview Grid">
+<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Preview Grid">
 
 6. Build Timeline
 
 Click Build Selected Passes. Choose Auto from Clip to create a sequence that matches your source footage exactly, or Choose Preset for manual control.
 
-<img src="assets/screenshots/help06.jpg" width="600" alt="Build Timeline">
+<img src="ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600" alt="Build Timeline">
 
 📝 Client Script Formatting Best Practices
 
