@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ProEdit Direct Builder</title>
+    
+    <!-- ADOBE NODE.JS BYPASS: Prevents Premiere from hiding our external libraries -->
+    <script>if (typeof module === 'object') { window.module = module; module = undefined; }</script>
+    
+    <script src="CSInterface.js"></script>
+    <script src="mammoth.browser.min.js"></script>
+    <script src="xlsx.full.min.js"></script>
+    
+    <!-- RESTORE NODE.JS: Turns it back on so we can save SRT files -->
+    <script>if (window.module) module = window.module;</script>
+
+    <style>
+        :root {
+            --accent: #0078FF; --accent-dim: #0056b3;
+            --green: #00cc66; --warn: #ffaa00; --red: #ff4444;
+            --bg: #1e1e1e; --panel: #272727; --border: #3a3a3a;
+            --text: #ffffff; --text2: #d4d4d4; --sub: #aaaaaa;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-drag: none; }
+        body { background: var(--bg); color: var(--text); font-family: 'Adobe Clean', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; padding: 14px; padding-bottom: 60px; line-height: 1.5; }
+        input, textarea, button, select { font-family: inherit; user-select: auto; }
+
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+        .header h1 { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; }
+
+        /* Bounding Boxes */
+        .group-box { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; background: rgba(255,255,255,0.02); }
+        .group-title { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+
+        .clip-badge { background: #1a1a1a; border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; margin-bottom: 12px; display: flex; align-items: stretch; gap: 10px; transition: border-color 0.15s; }
+        .clip-badge:hover { border-color: var(--accent); }
+        .clip-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; flex-shrink: 0; transition: background 0.2s; align-self: center; }
+        .clip-badge.loaded .dot { background: var(--green); }
+        .clip-badge.error  .dot { background: var(--red); }
+        .clip-badge .clip-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+        .clip-badge .clip-name { font-size: 11px; font-weight: 600; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .clip-badge .clip-meta { font-size: 10px; color: var(--sub); margin-top: 2px; }
+        
+        .section-label { font-size: 10px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .section-label label { cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .section-label input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; }
+
+        .file-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .file-row label.btn, .btn-secondary { padding: 6px 12px; background: #333; border: 1px solid var(--border); border-radius: 3px; cursor: pointer; font-size: 10px; color: var(--text2); white-space: nowrap; transition: all 0.15s; display: inline-block; }
+        .file-row label.btn:hover, .btn-secondary:hover { background: #444; border-color: #666; }
+        .file-name-display { font-size: 10px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        .file-name-display.loaded { color: var(--green); }
+        input[type="file"] { display: none; }
+
+        textarea { width: 100%; background: #1a1a1a; border: 1px solid var(--border); color: var(--text2); padding: 10px; border-radius: 4px; font-family: 'Courier New', Consolas, Menlo, monospace; font-size: 11px; height: 160px; resize: vertical; margin-bottom: 10px; transition: border-color 0.15s; }
+        textarea:focus { outline: none; border-color: var(--accent); }
+
+        .options-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-end; flex-wrap: wrap; }
+        .opt-field { flex: 1; min-width: 100px; }
+        .opt-field label { display: block; font-size: 9px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .opt-field input { width: 100%; background: #1a1a1a; border: 1px solid var(--border); color: var(--text2); padding: 6px 8px; border-radius: 3px; font-size: 11px; }
+        .opt-field input:focus { outline: none; border-color: var(--accent); }
+
+        .excl-row { margin-bottom: 12px; }
+        .excl-row label { display: block; font-size: 9px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .excl-row input { width: 100%; background: #1a1a1a; border: 1px solid var(--border); color: var(--text2); padding: 6px 8px; border-radius: 3px; font-size: 11px; }
+        .excl-row input:focus { outline: none; border-color: var(--accent); }
+
+        .btn-build { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 4px; font-weight: 700; letter-spacing: 1px; font-size: 12px; text-transform: uppercase; cursor: pointer; transition: background 0.15s; margin-bottom: 10px; }
+        .btn-build:hover:not(:disabled) { background: var(--accent-dim); }
+        .btn-build:disabled { background: #333; color: #555; cursor: not-allowed; }
+
+        #status { font-size: 10px; color: var(--sub); text-align: center; font-family: monospace; min-height: 16px; padding: 4px 0; }
+        #status.ok   { color: var(--green); }
+        #status.warn { color: var(--warn); }
+        #status.err  { color: var(--red); }
+
+        .btn-refresh { background: transparent; border: 1px solid #4a4a4a; color: var(--sub); font-size: 9px; padding: 4px 10px; border-radius: 2px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.15s; margin-left: 6px; }
+        .btn-refresh:hover { border-color: #888; color: var(--text); }
+
+        /* ── Modals ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #2c2c2c; border: 1px solid #4a4a4a; border-radius: 5px; padding: 20px 18px 16px; max-width: 380px; width: 92%; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+        .modal-title { font-size: 12px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .modal-body { font-size: 11px; color: var(--text2); line-height: 1.65; margin-bottom: 18px; }
+        .modal-body h4 { font-size: 10px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 4px; }
+        .modal-body h4:first-child { margin-top: 0; }
+        .modal-body ul, .modal-body ol { padding-left: 16px; margin: 0; margin-bottom: 12px; }
+        .modal-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+        .modal-btn { padding: 8px 18px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 3px; cursor: pointer; transition: all 0.15s; font-size: 10px; }
+        .modal-btn.primary { background: var(--accent); color: #fff; border: none; }
+        .modal-btn.primary:hover { background: var(--accent-dim); }
+        .modal-btn.ghost { background: transparent; border: 1px solid #4a4a4a; color: var(--text2); }
+        .modal-btn.ghost:hover { border-color: #888; color: var(--text); }
+
+        .seq-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .seq-option { background: #1e1e1e; border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s; }
+        .seq-option:hover { border-color: var(--accent); }
+        .seq-option-title { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+        .seq-option-desc  { font-size: 10px; color: var(--sub); line-height: 1.5; }
+        .seq-badge { display: inline-block; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(0,120,255,0.15); color: var(--accent); border: 1px solid rgba(0,120,255,0.3); border-radius: 2px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
+
+        .trinet-logo-wrap { text-align: right; padding: 18px 0 4px; margin-top: 10px; }
+        .trinet-logo-wrap img { height: 40px; width: auto; opacity: 1; display: inline-block; }
+
+        /* ── Compact Editable Preview ── */
+        .cuts-wrap { display: none; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .cuts-header { padding: 6px 10px 0; background: #222; font-size: 9px; color: var(--sub); text-transform: uppercase; letter-spacing: 0.5px; display: flex; flex-direction: column; }
+        .cuts-header-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .cuts-header-cols { display: flex; font-size: 8px; color: #888; border-bottom: 1px solid #111; padding-bottom: 4px; }
+        .col-h-n { width: 28px; text-align: center; flex-shrink: 0; }
+        .col-h-tc { width: 48px; text-align: center; flex-shrink: 0; }
+        .col-h-dur { width: 48px; text-align: center; flex-shrink: 0; }
+        .col-h-text { flex: 1; padding-left: 12px; }
+
+        .cuts-list { max-height: 200px; overflow-y: auto; background: #1e1e1e; }
+        .cut-item { display: flex; border-bottom: 1px solid var(--border); padding: 2px 0; align-items: flex-start; }
+        .cut-item:last-child { border-bottom: none; }
+        .cut-col { padding: 0 4px; }
+        .cut-col-n { width: 28px; color: var(--sub); font-size: 9px; text-align: center; padding-top: 2px; flex-shrink: 0; }
+        .cut-col-tc { width: 48px; flex-shrink: 0; }
+        .cut-col-tc input { width: 100%; background: transparent; border: 1px solid transparent; color: #7ec8ff; font-family: monospace; font-size: 10px; padding: 1px; border-radius: 2px; text-align: center; }
+        .cut-col-tc input:hover { border-color: #444; }
+        .cut-col-tc input:focus { border-color: var(--accent); outline: none; background: #111; }
+        .cut-col-dur { width: 48px; color: var(--sub); font-family: monospace; font-size: 9px; text-align: center; padding-top: 3px; flex-shrink: 0; }
+        .cut-col-text { flex: 1; min-width: 0; padding-right: 8px; position: relative; }
+        .cut-col-text textarea { width: 100%; background: transparent; border: 1px solid transparent; color: var(--text2); font-size: 10px; padding: 1px 4px; border-radius: 2px; resize: none; overflow: hidden; min-height: 16px; line-height: 1.2; }
+        .cut-col-text textarea:hover { border-color: #444; }
+        .cut-col-text textarea:focus { border-color: var(--accent); outline: none; background: #111; }
+        .indicator { position: absolute; left: -2px; top: 3px; color: var(--green); font-weight: bold; font-size: 12px; line-height: 1;}
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1 title="ProEdit Direct Sequence Builder">ProEdit Direct Builder</h1>
+    </div>
+    <div style="display:flex;align-items:center;flex-shrink:0">
+        <button class="btn-refresh" onclick="showHelp()" title="View instructions and expected script format">? Help</button>
+        <button class="btn-refresh" onclick="refreshPanel()" title="Clear all fields and reset the panel">↺ Refresh</button>
+    </div>
+</div>
+
+<div class="group-box">
+    <div class="group-title">Source Media & Script</div>
+
+    <div class="section-label" style="margin-bottom:6px;">1 — Source Clip</div>
+    <div class="file-row">
+        <label class="btn-secondary" onclick="browseClip()" title="Browse for your video file">Choose Video</label>
+    </div>
+    <div class="clip-badge" id="clipBadge">
+        <div class="dot" id="clipDot"></div>
+        <div class="clip-info" title="Video file linked to this build">
+            <div class="clip-name" id="clipName">No clip linked</div>
+            <div class="clip-meta" id="clipMeta">Click Choose Video to select your file</div>
+        </div>
+    </div>
+
+    <div class="section-label" style="margin-top: 16px;" title="Upload your script. NOTE: PDFs are not supported. Please paste PDF text directly into the text box below.">2 — Script</div>
+    <div class="file-row">
+        <label class="btn-secondary" for="scriptFile" title="Browse for your script file. NOTE: PDFs are not supported.">Choose File</label>
+        <input type="file" id="scriptFile" accept=".docx,.xlsx,.csv,.txt" onchange="handleFile(this)">
+        <span class="file-name-display" id="fileNameDisplay">No file chosen</span>
+    </div>
+    <textarea id="scriptIn" style="height: 120px;" title="You can also paste your timecode text directly into this box" placeholder="Or paste timecodes directly here...
+e.g.
+0:00 – 0:13  New Hire Onboarding flow begins
+0:14 – 0:22  Employee Profile flow
+0:23 – 0:34  Delete"></textarea>
+</div>
+
+<div class="group-box">
+    <div class="group-title">Build Operations</div>
+
+    <div class="section-label" title="Check this to build a new sequence and perform all cuts">
+        <label><input type="checkbox" id="chkSection3" checked onchange="toggleSectionState()"> 3 — Build Edit Timeline</label>
+    </div>
+    <div id="section3Content" style="padding-left: 20px; border-left: 2px solid #333; margin-bottom: 16px;">
+        <div class="excl-row" style="margin-bottom: 8px;">
+            <label title="If a cut description contains any of these words, that cut will be completely skipped">
+                Exclusion Keywords
+                <span style="font-size: 9px; color: var(--sub); font-weight: normal; text-transform: none; margin-left: 4px;">
+                         (Lines containing these are skipped)
+                    </span>
+                </label>
+            <input type="text" id="excludeIn" value="Delete, Skip, Omit, N/A" title="Separate multiple keywords with commas">
+        </div>
+        <div class="options-row" style="margin-bottom: 0;">
+            <div class="opt-field">
+                <label title="The exact name of the new sequence that will be created">Sequence Name</label>
+                <input type="text" id="seqName" placeholder="Auto from clip name" title="Leave blank to use the original video filename">
+            </div>
+            <div class="opt-field" style="max-width:120px">
+                <label title="Adds extra frames to the start and end of every single cut">Handle (frames)</label>
+                <input type="number" id="handleFrames" value="0" min="0" max="60" title="Extra frames added to each side of every cut. 0 = exact cuts.">
+            </div>
+        </div>
+    </div>
+
+    <div class="section-label" title="Check this to generate text extraction items">
+        <label><input type="checkbox" id="chkSection4" checked onchange="toggleSectionState()"> 4 — Overlay Text and Markers</label>
+    </div>
+    <div id="section4Content" style="padding-left: 20px; border-left: 2px solid #333;">
+        <div class="options-row" style="margin-bottom:6px">
+            <div class="opt-field">
+                <label title="Type Keyword(s)/ Column names for Overlay Text Layer from uploaded script">
+                    Extraction Keyword(s)/ Column Name
+                    <span style="font-size: 9px; color: var(--sub); font-weight: normal; text-transform: none; margin-left: 4px;">
+                        (Type Keyword(s)/ Column names for srt file from uploaded script)
+                    </span>
+                </label>
+                <input type="text" id="extractIn" value="Copy" title="Example: If your script says 'Copy', it extracts text from the Copy column.">
+            </div>
+        </div>
+        <div style="display:flex; gap:15px;">
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;" title="Adds a marker on the sequence timeline for each cut containing the text">
+                <input type="checkbox" id="chkMarkers" checked> <span style="font-size:10px; color:var(--text2)">Create Timeline Markers</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;" title="Creates an .srt subtitle file next to your .prproj file and auto-imports it">
+                <input type="checkbox" id="chkCaptions" checked> <span style="font-size:10px; color:var(--text2)">Generate Caption Track (.srt)</span>
+            </label>
+        </div>
+    </div>
+</div>
+
+<button class="btn-build" id="buildBtn" onclick="onMasterBuildClick()" disabled title="Execute the checked operations above">Select Clip First</button>
+<div id="status">Select a video clip via Browse to begin.</div>
+
+<div class="cuts-wrap" id="cutsWrap">
+    <div class="cuts-header">
+        <div class="cuts-header-top">
+            <span>Editable Preview — cuts to be placed</span>
+            <span id="cutSummary"></span>
+        </div>
+        <div class="cuts-header-cols">
+            <div class="col-h-n">Clip #</div>
+            <div class="col-h-tc">In</div>
+            <div class="col-h-tc">Out</div>
+            <div class="col-h-dur">Duration</div>
+            <div class="col-h-text">SRT Text</div>
+        </div>
+    </div>
+    <div class="cuts-list" id="cutsList"></div>
+</div>
+
+<div class="trinet-logo-wrap">
+    <img src="assets/icons/logo.svg" alt="Logo">
+</div>
+
+<!-- ── ALL MODALS ── -->
+<div class="modal-overlay" id="activeSeqModal">
+    <div class="modal-box">
+        <div class="modal-title" style="color: var(--warn)">Active Sequence Warning</div>
+        <div class="modal-body">
+            This will create an SRT file and place markers in your <strong>currently open (active) sequence</strong> in Premiere.<br><br>
+            If this is not the sequence you want to create the markers in, cancel and open the correct desired sequence before proceeding.
+        </div>
+        <div class="modal-btns">
+            <button class="modal-btn ghost" onclick="document.getElementById('activeSeqModal').classList.remove('show')">Cancel</button>
+            <button class="modal-btn primary" onclick="executeOverlaysOnly()">Proceed</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="seqModal">
+    <div class="modal-box">
+        <div class="modal-title">Create Sequence</div>
+        <div class="seq-options">
+            <div class="seq-option" onclick="executeFullBuild('auto')">
+                <div class="seq-option-title">Auto from Clip <span class="seq-badge">Recommended</span></div>
+                <div class="seq-option-desc">Sequence matches your footage exactly — resolution, FPS, Rec. 709 color space. No dialogs.</div>
+            </div>
+            <div class="seq-option" onclick="executeFullBuild('preset')">
+                <div class="seq-option-title">Choose Preset</div>
+                <div class="seq-option-desc">Opens Premiere's sequence preset dialog for manual configuration.</div>
+            </div>
+        </div>
+        <div class="modal-btns">
+            <button class="modal-btn ghost" onclick="document.getElementById('seqModal').classList.remove('show')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="alertModal">
+    <div class="modal-box" style="max-width:320px;">
+        <div class="modal-title" id="alertTitle">Notice</div>
+        <div class="modal-body" id="alertMessage" style="white-space: pre-line;"></div>
+        <div class="modal-btns">
+            <button class="modal-btn primary" onclick="document.getElementById('alertModal').classList.remove('show')">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="helpModal">
+    <div class="modal-box" style="max-width:400px">
+        <div class="modal-title">How to Use ProEdit Direct Builder</div>
+        <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+            <h4>Workflow</h4>
+            <ol>
+                <li>Click <strong>Choose Video</strong> to automatically import and link a video file.</li>
+                <li><strong>Load your script</strong> — Choose File (.docx, .xlsx, .csv, .txt).</li>
+                <li>Use the <strong>Checkboxes</strong> to choose your passes (Build Sequence vs Overlays Only).</li>
+                <li>Click <strong>Build Timeline</strong>.</li>
+            </ol>
+            
+            <h4>Supported Formats & PDFs</h4>
+            <ul>
+                <li><strong>Best for Columns:</strong> Excel (.xlsx), CSV</li>
+                <li><strong>Best for Standard Text:</strong> Word (.docx), Text (.txt)</li>
+                <li><strong>PDF Workaround:</strong> PDFs are not supported natively. Easily bypass this by copying the text from your PDF and pasting it directly into the text box.</li>
+            </ul>
+
+            <h4>Caption Styling</h4>
+            <p style="margin-bottom: 8px;">After dragging your generated <code>.srt</code> onto the timeline, highlight the blocks, format the font in the Essential Graphics panel, and save it as a "Track Style" to style them all instantly.</p>
+        </div>
+        <div class="modal-btns">
+            <button class="modal-btn primary" onclick="document.getElementById('helpModal').classList.remove('show')">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const cs = new CSInterface();
+const fs = require('fs');
+const path = require('path');
+
+let clipState = { detected: false, name: '', fps: 29.97, duration: 0, path: '', projPath: '' };
+let nativeExcelGrid = null; 
+let parsedCutsData = []; // Store parsed cuts so edits are preserved
+
+function formatDurationStr(totalSeconds) {
+    var h = Math.floor(totalSeconds / 3600);
+    var m = Math.floor((totalSeconds % 3600) / 60);
+    var s = Math.floor(totalSeconds % 60);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function showHelp() { document.getElementById('helpModal').classList.add('show'); }
+
+function customAlert(title, message) {
+    document.getElementById('alertTitle').innerText = title;
+    document.getElementById('alertMessage').innerText = message;
+    document.getElementById('alertModal').classList.add('show');
+}
+
+function toggleSectionState() {
+    var sec3 = document.getElementById('chkSection3').checked;
+    var sec4 = document.getElementById('chkSection4').checked;
+    document.getElementById('section3Content').style.opacity = sec3 ? '1' : '0.4';
+    document.getElementById('section3Content').style.pointerEvents = sec3 ? 'auto' : 'none';
+    document.getElementById('section4Content').style.opacity = sec4 ? '1' : '0.4';
+    document.getElementById('section4Content').style.pointerEvents = sec4 ? 'auto' : 'none';
+    updateBuildButtonState();
+}
+
+function parseItemResponse(result) {
+    if (result === "EvalScript error.") { setClipError('Premiere API connection failed.'); return; }
+    try {
+        var data = JSON.parse(result);
+        if (data.err === 'CANCELLED') { setStatus('File browse cancelled.', ''); return; }
+        if (data.err) { setClipError('Premiere error: ' + data.err); return; }
+
+        clipState = {
+            detected: true, name: data.name || 'Unknown', fps: parseFloat(data.fps) || 29.97,
+            duration: parseFloat(data.duration) || 0, path: data.path || '', projPath: data.projPath || ''
+        };
+
+        var baseName = clipState.name.replace(/\.[^.]+$/, '');
+        if (!document.getElementById('seqName').value) document.getElementById('seqName').value = baseName + '_Edit';
+
+        setClipLoaded();
+        setStatus('✓ Clip linked — ' + clipState.name, 'ok');
+        
+        if (data.existed) {
+            customAlert("Clip Linked", "File is already present in the Project Panel.\n\nUsing the existing clip to prevent duplicates.");
+        }
+        
+        checkReady();
+    } catch(e) { setClipError('Could not parse Premiere response. Try again.'); }
+}
+
+function browseClip() {
+    setStatus('Waiting for file selection...', '');
+
+    const jsx = `(function() {
+        try {
+            var filterString = "";
+            if ($.os.search(/windows/i) !== -1) { filterString = "Video Files:*.mp4;*.mov;*.avi;*.mxf;*.prores,All Files:*.*"; }
+            var file = File.openDialog("Select Source Video", filterString, false);
+            if (!file) return JSON.stringify({ err: "CANCELLED" });
+            var targetPath = file.fsName;
+            
+            function extractItem(item, existed) {
+                var filePath = ''; try { filePath = item.getMediaPath(); } catch(e) {}
+                var projPath = ''; try { projPath = app.project.path; } catch(e) {}
+                var fps = 0; try { var interp = item.getFootageInterpretation(); if (interp && interp.frameRate > 0) fps = interp.frameRate; } catch(e) {}
+                if (!fps || fps <= 0) { try { fps = parseFloat(item.frameRate) || 0; } catch(e) {} }
+                if (!fps || fps <= 0) fps = 29.97;
+                var dur = 0; try { var d = item.duration; dur = (d && typeof d.seconds !== 'undefined') ? d.seconds : (parseFloat(d) || 0); } catch(e) {}
+                return JSON.stringify({ name: item.name, fps: fps, duration: dur, path: filePath, projPath: projPath, existed: existed });
+            }
+
+            function findClipByPath(bin, searchPath) {
+                for (var i = 0; i < bin.children.numItems; i++) {
+                    var child = bin.children[i];
+                    try {
+                        if (child.type === 1 || child.type === 8) { 
+                            var p = child.getMediaPath();
+                            if (p && p.replace(/\\\\/g, '/').toLowerCase() === searchPath.replace(/\\\\/g, '/').toLowerCase()) return child;
+                        }
+                    } catch(e) {}
+                    try { if (child.type === 2 && child.children) { var found = findClipByPath(child, searchPath); if (found) return found; } } catch(e) {}
+                }
+                return null;
+            }
+
+            var existed = true;
+            var item = findClipByPath(app.project.rootItem, targetPath);
+            if (!item) {
+                existed = false;
+                var imported = app.project.importFiles([targetPath], false, app.project.rootItem, false);
+                if (imported) item = findClipByPath(app.project.rootItem, targetPath);
+            }
+            if (!item) return JSON.stringify({ err: "Failed to import clip. Unsupported format." });
+            return extractItem(item, existed);
+        } catch(e) { return JSON.stringify({ err: e.message }); }
+    })()`;
+    cs.evalScript(jsx, parseItemResponse);
+}
+
+function setClipLoaded() {
+    document.getElementById('clipDot').parentElement.className = 'clip-badge loaded';
+    document.getElementById('clipName').textContent = clipState.name;
+    document.getElementById('clipMeta').textContent = clipState.fps.toFixed(3) + ' fps' + (clipState.duration > 0 ? '  ·  Duration: ' + formatDurationStr(clipState.duration) : '');
+}
+
+function setClipError(msg) {
+    document.getElementById('clipDot').parentElement.className = 'clip-badge error';
+    document.getElementById('clipName').textContent = "Error";
+    document.getElementById('clipMeta').textContent = msg;
+    clipState.detected = false;
+    document.getElementById('buildBtn').disabled = true;
+    document.getElementById('buildBtn').textContent = 'Select Clip First';
+    setStatus(msg, 'err');
+}
+
+function handleFile(input) {
+    var file = input.files[0];
+    if (!file) return;
+    
+    var ext = file.name.split('.').pop().toLowerCase();
+    var validExts = ['docx', 'xlsx', 'csv', 'txt'];
+    
+    if (ext === 'pdf') {
+        customAlert("PDFs Are Not Supported", "PDF file layouts break timecode formatting.\n\nEASY WORKAROUND:\n1. Open your PDF, select all text, and copy it.\n2. Paste it directly into the text box below.\n\nOR convert your PDF to a Word (.docx) file first.");
+        input.value = ""; return;
+    } else if (validExts.indexOf(ext) === -1) {
+        customAlert("Unsupported File Format", "Please upload an industry-standard script format.");
+        input.value = ""; return;
+    }
+    
+    var disp = document.getElementById('fileNameDisplay');
+    disp.textContent = file.name; disp.className = 'file-name-display';
+    nativeExcelGrid = null; 
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        
+        if (ext === 'docx') {
+            var bufferCopy = e.target.result.slice(0);
+            mammoth.convertToHtml({ arrayBuffer: e.target.result }).then(function(resHtml) {
+                var html = resHtml.value;
+                if (html.indexOf('<table') !== -1) {
+                    var tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    var parsedGrid = [];
+                    var rows = tempDiv.querySelectorAll('tr');
+                    for (var r = 0; r < rows.length; r++) {
+                        var cells = rows[r].querySelectorAll('td, th');
+                        var rowData = [];
+                        for (var c = 0; c < cells.length; c++) {
+                            var cellHtml = cells[c].innerHTML;
+                            cellHtml = cellHtml.replace(/<p[^>]*>/gi, ' ').replace(/<\/p>/gi, ' ').replace(/<br\s*\/?>/gi, '\n');
+                            var cellDiv = document.createElement('div');
+                            cellDiv.innerHTML = cellHtml;
+                            var cleanText = cellDiv.textContent || cellDiv.innerText || "";
+                            rowData.push(cleanText.trim());
+                        }
+                        parsedGrid.push(rowData);
+                    }
+                    nativeExcelGrid = parsedGrid;
+                    document.getElementById('scriptIn').value = "Word Table Loaded. (" + rows.length + " rows)";
+                    disp.className = 'file-name-display loaded'; checkReady();
+                } else {
+                    mammoth.extractRawText({ arrayBuffer: bufferCopy }).then(function(r) { 
+                        document.getElementById('scriptIn').value = r.value; 
+                        disp.className = 'file-name-display loaded'; checkReady(); 
+                    });
+                }
+            }).catch(function(err) {
+                mammoth.extractRawText({ arrayBuffer: bufferCopy }).then(function(r) { 
+                    document.getElementById('scriptIn').value = r.value; 
+                    disp.className = 'file-name-display loaded'; checkReady(); 
+                });
+            });
+        } 
+        else if (ext === 'xlsx' || ext === 'csv') {
+            try {
+                if (typeof XLSX === 'undefined') {
+                    customAlert("Missing Library", "Cannot parse Excel files.\n\nThe 'xlsx.full.min.js' library was blocked.");
+                    input.value = ""; return;
+                }
+                var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                var sheetName = wb.SheetNames[0];
+                var worksheet = wb.Sheets[sheetName];
+                
+                nativeExcelGrid = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: "", blankrows: false});
+                
+                var previewText = XLSX.utils.sheet_to_csv(worksheet, {FS: "\t", blankrows: false});
+                document.getElementById('scriptIn').value = previewText.replace(/^\uFEFF|^\uFFFE|^ÿþ/g, '').trim();
+                
+                disp.className = 'file-name-display loaded'; checkReady();
+            } catch(err) {
+                if (ext === 'csv') {
+                    var tDecoder = new TextDecoder('utf-8');
+                    var decoded = tDecoder.decode(e.target.result);
+                    document.getElementById('scriptIn').value = decoded.replace(/^\uFEFF|^\uFFFE|^ÿþ/g, '').trim(); 
+                    disp.className = 'file-name-display loaded'; checkReady();
+                } else {
+                    customAlert("Spreadsheet Error", "Failed to parse the file.\nError: " + err.message);
+                    input.value = "";
+                }
+            }
+        } 
+        else {
+            var tDecoder = new TextDecoder('utf-8');
+            var decoded = tDecoder.decode(e.target.result);
+            document.getElementById('scriptIn').value = decoded.replace(/^\uFEFF|^\uFFFE|^ÿþ/g, '').trim(); 
+            disp.className = 'file-name-display loaded'; checkReady();
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+document.getElementById('scriptIn').addEventListener('input', function() {
+    nativeExcelGrid = null; 
+    checkReady();
+});
+
+// Update the build button text separately so manual edits in the list don't cause a re-parse
+function updateBuildButtonState() {
+    var hasClip = clipState.detected;
+    var btn = document.getElementById('buildBtn');
+    var sec3 = document.getElementById('chkSection3').checked;
+    var sec4 = document.getElementById('chkSection4').checked;
+
+    if (hasClip && parsedCutsData.length > 0) {
+        if (!sec3 && !sec4) {
+            btn.disabled = true; btn.textContent = 'Check an Operation Above';
+        } else {
+            btn.disabled = false; btn.textContent = 'Build Selected Passes — ' + parsedCutsData.length + ' Cuts';
+        }
+    } else if (!hasClip) {
+        btn.disabled = true; btn.textContent = 'Select Clip First';
+    } else {
+        btn.disabled = true; btn.textContent = 'Load Script First';
+    }
+}
+
+function parseTC(raw) {
+    if (!raw) return null;
+    var s = raw.trim(); var m;
+    m = s.match(/^(\d{1,2}):(\d{2}):(\d{2}):(\d{2})$/); if (m) return +m[1]*3600 + +m[2]*60 + +m[3];
+    m = s.match(/^(\d{1,2}):(\d{2}):(\d{2}(?:\.\d+)?)$/); if (m) return +m[1]*3600 + +m[2]*60 + parseFloat(m[3]);
+    m = s.match(/^(\d{1,2}):(\d{2}(?:\.\d+)?)$/); if (m) return +m[1]*60 + parseFloat(m[2]);
+    m = s.match(/^(\d{1,2})\.(\d{2})$/); if (m) return +m[1]*60 + +m[2];
+    m = s.match(/^(?:(\d+)\s*(?:h|hr|hrs|hour|hours))?\s*(?:(\d+)\s*(?:m|min|mins|minute|minutes))?\s*(?:(\d+(?:\.\d+)?)\s*(?:s|sec|secs|second|seconds))?$/i);
+    if (m && (m[1]||m[2]||m[3])) return (+m[1]||0)*3600 + (+m[2]||0)*60 + parseFloat(m[3]||0);
+    m = s.match(/^(\d+(?:\.\d+)?)\s*(?:s|sec|secs|second|seconds)$/i); if (m) return parseFloat(m[1]);
+    m = s.match(/^(\d{2})(\d{2})$/); if (m) return +m[1]*60 + +m[2];
+    m = s.match(/^(\d+(?:\.\d+)?)$/); if (m) return parseFloat(m[1]);
+    return null;
+}
+
+function splitCsvLine(str, sep) {
+    if (sep === '\t') return str.split('\t'); 
+    var result = []; var inQuotes = false; var current = "";
+    for(var c=0; c<str.length; c++) {
+        var char = str[c];
+        if(char === '"') inQuotes = !inQuotes;
+        else if(char === sep && !inQuotes) { result.push(current); current = ""; }
+        else current += char;
+    }
+    result.push(current);
+    return result;
+}
+
+function parseStoryboard(text) {
+    var excludeWords = document.getElementById('excludeIn').value.toLowerCase().split(',').map(function(w){ return w.trim(); }).filter(Boolean);
+    var extractWords = document.getElementById('extractIn').value.toLowerCase().split(',').map(function(w){ return w.trim(); }).filter(Boolean);
+    
+    var SEP = '\\s*(?:–|—|-{1,2}|to|→|~|\\/)\\s*';
+    var TCTOK = '([\\d][^\\s–—\\-→~\\/]{0,15})';
+    var lineRe = new RegExp(TCTOK + SEP + TCTOK + '(.*)', 'i');
+    
+    var cuts = []; var excluded = 0;
+    var grid = [];
+
+    if (nativeExcelGrid) {
+        grid = nativeExcelGrid;
+    } else {
+        var lines = text.split(/\r?\n/);
+        var separator = '\t';
+        if (text.substring(0, 1000).indexOf('\t') === -1 && text.substring(0, 1000).indexOf(',') !== -1) separator = ',';
+        
+        for (var i = 0; i < lines.length; i++) {
+            if (lines[i].indexOf(separator) !== -1) {
+                var cols = splitCsvLine(lines[i], separator);
+                for (var c=0; c<cols.length; c++) cols[c] = cols[c].trim().replace(/^['"]|['"]$/g, '');
+                grid.push(cols);
+            } else {
+                grid.push([lines[i].trim()]);
+            }
+        }
+    }
+
+    var copyColIndex = -1;
+    var isTabular = false;
+    var exactHeaderMatches = [];
+    
+    for (var h = 0; h < Math.min(20, grid.length); h++) {
+        if (grid[h].length > 1) { 
+            for (var c = 0; c < grid[h].length; c++) {
+                var colText = String(grid[h][c]).toLowerCase().trim();
+                for (var w = 0; w < extractWords.length; w++) {
+                    var extW = extractWords[w];
+                    if (colText === extW || colText.indexOf(extW) !== -1) {
+                        copyColIndex = c; 
+                        isTabular = true; 
+                        if (colText === extW) exactHeaderMatches.push(extW);
+                        break;
+                    }
+                }
+                if (isTabular) break;
+            }
+        }
+        if (isTabular) break;
+    }
+
+    for (var r = 0; r < grid.length; r++) {
+        var rowData = grid[r];
+        if (!rowData || rowData.length === 0) continue;
+        
+        var fullLine = rowData.join(' ');
+        var m = fullLine.match(lineRe);
+        if (!m) continue;
+
+        var startSecs = parseTC(m[1]); var endSecs = parseTC(m[2]);
+        if (startSecs === null || endSecs === null || endSecs <= startSecs) continue;
+
+        var overlayText = "";
+        var note = m[3].substring(0,60).trim();
+
+        if (isTabular && copyColIndex !== -1) {
+            var fullColBlock = rowData.length > copyColIndex ? String(rowData[copyColIndex]) : "";
+            var fullSearchBlock = fullLine;
+            var lookaheadCount = 0;
+            
+            for (var j = r + 1; j < grid.length && lookaheadCount < 15; j++) {
+                var nextRow = grid[j];
+                if (nextRow.join(' ').match(lineRe)) break;
+                var nextCell = nextRow.length > copyColIndex ? String(nextRow[copyColIndex]) : "";
+                if (nextCell.trim()) { fullColBlock += '\n' + nextCell.trim(); }
+                fullSearchBlock += '\n' + nextRow.join(' ');
+                lookaheadCount++;
+            }
+
+            var keywordFoundInCell = false;
+            for (var k = 0; k < extractWords.length; k++) {
+                var extW = extractWords[k];
+                var idx = fullColBlock.toLowerCase().indexOf(extW);
+                if (idx !== -1) {
+                    overlayText = fullColBlock.substring(idx + extW.length).replace(/^[:\s\-]+/, '').split('\n')[0].trim();
+                    keywordFoundInCell = true;
+                    break;
+                }
+            }
+            
+            if (!keywordFoundInCell && exactHeaderMatches.length > 0) {
+                overlayText = fullColBlock.trim();
+            }
+            
+            var skip = excludeWords.some(function(w){ return w && fullSearchBlock.toLowerCase().indexOf(w) !== -1; });
+            if (skip) { excluded++; continue; }
+
+        } else {
+            var fullBlock = fullLine;
+            var lookaheadCount = 0;
+            for (var j = r + 1; j < grid.length && lookaheadCount < 10; j++) {
+                var ahead = grid[j].join(' ');
+                if (!ahead.trim()) continue;
+                lookaheadCount++;
+                if (ahead.match(lineRe)) break;
+                fullBlock += '\n' + ahead;
+            }
+
+            var skip = excludeWords.some(function(w){ return w && fullBlock.toLowerCase().indexOf(w) !== -1; });
+            if (skip) { excluded++; continue; }
+
+            for (var k = 0; k < extractWords.length; k++) {
+                var extW = extractWords[k];
+                var idx = fullBlock.toLowerCase().indexOf(extW);
+                if (idx !== -1) {
+                    overlayText = fullBlock.substring(idx + extW.length).replace(/^[:\s\-]+/, '').trim();
+                    overlayText = overlayText.split('\n')[0].trim();
+                    break;
+                }
+            }
+        }
+        cuts.push({ 
+            id: 'cut_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            start: startSecs, 
+            startRaw: m[1],
+            end: endSecs, 
+            endRaw: m[2],
+            note: note, 
+            overlay: overlayText 
+        });
+    }
+    return { cuts: cuts, excluded: excluded };
+}
+
+function checkReady() {
+    var hasClip = clipState.detected;
+    var hasText = document.getElementById('scriptIn').value.trim().length > 0;
+
+    if (hasText) {
+        var result = parseStoryboard(document.getElementById('scriptIn').value);
+        parsedCutsData = result.cuts;
+        renderPreview(parsedCutsData, result.excluded);
+        document.getElementById('cutsWrap').style.display = parsedCutsData.length > 0 ? 'block' : 'none';
+    } else {
+        parsedCutsData = [];
+        document.getElementById('cutsWrap').style.display = 'none';
+    }
+    updateBuildButtonState();
+}
+
+document.getElementById('excludeIn').addEventListener('input', checkReady);
+document.getElementById('extractIn').addEventListener('input', checkReady);
+
+// Recalculates height of textareas based on content
+function autoResizeTextarea(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+
+// Function to handle updates from the editable preview panel
+function updateCutData(id, field, value) {
+    for (var i = 0; i < parsedCutsData.length; i++) {
+        if (parsedCutsData[i].id === id) {
+            if (field === 'startRaw' || field === 'endRaw') {
+                parsedCutsData[i][field] = value;
+                var parsedSecs = parseTC(value);
+                if (parsedSecs !== null) {
+                    parsedCutsData[i][field.replace('Raw', '')] = parsedSecs;
+                }
+            } else if (field === 'displayString') {
+                // Determine if we are updating an overlay or note
+                if (parsedCutsData[i].overlay) {
+                    parsedCutsData[i].overlay = value;
+                } else if (value.trim() !== '') {
+                   // If they typed something and there wasn't an overlay before, make it an overlay now.
+                   parsedCutsData[i].overlay = value;
+                }
+            }
+            break;
+        }
+    }
+}
+
+// FORMAT TO EXACT MM:SS
+function formatTime(s) { 
+    var m = Math.floor(s / 60); 
+    var sec = Math.floor(s % 60); 
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0'); 
+}
+
+function renderPreview(cuts, excluded) {
+    var list = document.getElementById('cutsList');
+    document.getElementById('cutSummary').textContent = cuts.length + ' cuts · ' + excluded + ' excluded';
+    list.innerHTML = '';
+    
+    cuts.forEach(function(c, i) {
+        var row = document.createElement('div'); 
+        row.className = 'cut-item';
+        
+        var indicatorHtml = c.overlay ? '<span class="indicator" title="Overlay text found">*</span>' : '';
+        var displayString = c.overlay ? c.overlay : '';
+        
+        var startFormatted = formatTime(c.start);
+        var endFormatted = formatTime(c.end);
+        var durFormatted = formatTime(c.end - c.start);
+        
+        row.innerHTML = `
+            <div class="cut-col cut-col-n">${String(i+1).padStart(2,'0')}</div>
+            <div class="cut-col cut-col-tc">
+                <input type="text" value="${startFormatted}" onchange="updateCutData('${c.id}', 'startRaw', this.value)">
+            </div>
+            <div class="cut-col cut-col-tc">
+                <input type="text" value="${endFormatted}" onchange="updateCutData('${c.id}', 'endRaw', this.value)">
+            </div>
+            <div class="cut-col cut-col-dur">${durFormatted}</div>
+            <div class="cut-col cut-col-text">
+                ${indicatorHtml}
+                <textarea rows="1" oninput="autoResizeTextarea(this)" onchange="updateCutData('${c.id}', 'displayString', this.value)" placeholder="">${displayString}</textarea>
+            </div>
+        `;
+        list.appendChild(row);
+        
+        // Auto-resize the textareas initially
+        var textarea = row.querySelector('textarea');
+        setTimeout(function() { autoResizeTextarea(textarea); }, 0);
+    });
+}
+
+function onMasterBuildClick() {
+    if (!clipState.detected) return;
+    if (parsedCutsData.length === 0) return;
+    
+    var sec3 = document.getElementById('chkSection3').checked;
+    var sec4 = document.getElementById('chkSection4').checked;
+    
+    if (sec3) { document.getElementById('seqModal').classList.add('show'); } 
+    else if (sec4) { document.getElementById('activeSeqModal').classList.add('show'); }
+}
+
+function formatSrtTime(secs) {
+    var h = Math.floor(secs / 3600);
+    var m = Math.floor((secs % 3600) / 60);
+    var s = Math.floor(secs % 60);
+    var ms = Math.floor((secs % 1) * 1000);
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0') + ',' + String(ms).padStart(3, '0');
+}
+
+function executeOverlaysOnly() {
+    document.getElementById('activeSeqModal').classList.remove('show');
+    if (parsedCutsData.length === 0) { customAlert('Error', 'No valid cuts found to process.'); return; }
+
+    var fps = clipState.fps;
+    var seqName = document.getElementById('seqName').value.trim() || clipState.name.replace(/\.[^.]+$/, '');
+    var handleFrames = parseInt(document.getElementById('handleFrames').value) || 0;
+    var cuts = parsedCutsData; // Use the parsed and potentially edited data
+    var doMarkers = document.getElementById('chkMarkers').checked ? "true" : "false";
+    var doCaptions = document.getElementById('chkCaptions').checked;
+    
+    setStatus('Processing active sequence...', ''); document.getElementById('buildBtn').disabled = true;
+
+    var srtPath = "";
+    if (doCaptions) {
+        var srtContent = ""; var srtIndex = 1; var currentSrtSecs = 0;
+        for (var i = 0; i < cuts.length; i++) {
+            var c = cuts[i];
+            var durSecs = (c.end + (handleFrames / fps)) - Math.max(0, c.start - (handleFrames / fps));
+            if (c.overlay) {
+                srtContent += srtIndex + "\n" + formatSrtTime(currentSrtSecs) + " --> " + formatSrtTime(currentSrtSecs + durSecs) + "\n" + c.overlay + "\n\n";
+                srtIndex++;
+            }
+            currentSrtSecs += durSecs;
+        }
+        if (srtContent) {
+            try {
+                var dir = require('os').tmpdir();
+                if (clipState.projPath) dir = path.dirname(clipState.projPath);
+                else if (clipState.path) dir = path.dirname(clipState.path);
+                srtPath = path.join(dir, seqName + "_Captions.srt");
+                fs.writeFileSync(srtPath, srtContent, 'utf8');
+            } catch(e) { srtPath = ""; }
+        }
+    }
+
+    var cutsJson = JSON.stringify(cuts);
+    var jsx = `(function() {
+        try {
+            var seq = app.project.activeSequence;
+            if (!seq) return "ERR:NO_ACTIVE_SEQUENCE";
+            var fps = ${fps}; var handle = ${handleFrames}; var cuts = ${cutsJson};
+            if (${doMarkers}) {
+                var markerTime = 0;
+                for (var m=0; m < cuts.length; m++) {
+                    var mdur = (cuts[m].end + handle/fps) - Math.max(0, cuts[m].start - handle/fps);
+                    if (cuts[m].overlay) {
+                        var newMarker = seq.markers.createMarker(markerTime);
+                        newMarker.name = "Overlay Text"; newMarker.comments = cuts[m].overlay; newMarker.end = markerTime + mdur;
+                    }
+                    markerTime += mdur;
+                }
+            }
+            var srtPathVal = ${JSON.stringify(srtPath)};
+            if (srtPathVal !== "") { try { app.project.importFiles([srtPathVal], false, app.project.rootItem, false); } catch(e) {} }
+            return "OK:" + cuts.length;
+        } catch(e) { return "ERR:" + e.message; }
+    })();`;
+
+    cs.evalScript(jsx, function(result) {
+        document.getElementById('buildBtn').disabled = false;
+        if (result === "EvalScript error.") { setStatus("Error: API disconnected.", "err"); return; }
+        if (!result || result.indexOf('ERR:') === 0) {
+            var errMsg = result ? result.replace('ERR:', '') : 'No response';
+            if (errMsg === 'NO_ACTIVE_SEQUENCE') customAlert('Action Failed', 'No active sequence found. Please open a sequence in the Timeline panel first.');
+            else setStatus('Premiere script error: ' + errMsg, 'err');
+            return;
+        }
+        var msg = "Items applied successfully to the active timeline!";
+        if (srtPath) msg += "\n\nThe Captions file (.srt) has been placed in your Project Bin. Drag it directly onto your timeline to style your text.";
+        customAlert("Overlays Complete", msg); setStatus("✓ Operations completed.", "ok");
+    });
+}
+
+function executeFullBuild(isPreset) {
+    document.getElementById('seqModal').classList.remove('show');
+    if (parsedCutsData.length === 0) { customAlert('Error', 'No valid cuts found to process.'); return; }
+
+    var fps = clipState.fps;
+    var seqName = document.getElementById('seqName').value.trim() || clipState.name.replace(/\.[^.]+$/, '') + '_Edit';
+    var handleFrames = parseInt(document.getElementById('handleFrames').value) || 0;
+    var cuts = parsedCutsData; // Use the parsed and potentially edited data
+    
+    var doSec4 = document.getElementById('chkSection4').checked;
+    var doMarkers = (doSec4 && document.getElementById('chkMarkers').checked) ? "true" : "false";
+    var doCaptions = (doSec4 && document.getElementById('chkCaptions').checked);
+
+    setStatus('Building sequence...', ''); document.getElementById('buildBtn').disabled = true;
+
+    var srtPath = "";
+    if (doCaptions) {
+        var srtContent = ""; var srtIndex = 1; var currentSrtSecs = 0;
+        for (var i = 0; i < cuts.length; i++) {
+            var c = cuts[i];
+            var durSecs = (c.end + (handleFrames / fps)) - Math.max(0, c.start - (handleFrames / fps));
+            if (c.overlay) {
+                srtContent += srtIndex + "\n" + formatSrtTime(currentSrtSecs) + " --> " + formatSrtTime(currentSrtSecs + durSecs) + "\n" + c.overlay + "\n\n";
+                srtIndex++;
+            }
+            currentSrtSecs += durSecs;
+        }
+        if (srtContent) {
+            try {
+                var dir = require('os').tmpdir();
+                if (clipState.projPath) dir = path.dirname(clipState.projPath);
+                else if (clipState.path) dir = path.dirname(clipState.path);
+                srtPath = path.join(dir, seqName + "_Captions.srt");
+                fs.writeFileSync(srtPath, srtContent, 'utf8');
+            } catch(e) { srtPath = ""; }
+        }
+    }
+
+    var cutsJson = JSON.stringify(cuts);
+    var clipNameStr = JSON.stringify(clipState.name);
+    var isPresetStr = (isPreset === 'preset') ? "true" : "false";
+    
+    var jsx = `(function() {
+        try {
+            var clip = null;
+            try { var sel = app.project.getSelection(); if (sel && sel.length > 0) clip = sel[0]; } catch(e) {}
+            if (!clip) {
+                (function findClip(bin) {
+                    for (var i = 0; i < bin.children.numItems; i++) {
+                        var child = bin.children[i];
+                        if (child.name === ${clipNameStr}) { clip = child; return; }
+                        try { if (child.type === 2 && child.children) findClip(child); } catch(e) {}
+                    }
+                })(app.project.rootItem);
+            }
+            if (!clip) { return "ERR:CLIP_NOT_FOUND"; }
+
+            var fps    = ${fps}; var handle = ${handleFrames}; var cuts   = ${cutsJson};
+            var recSecs = 0; var startIndex = 0; var seq = null;
+            
+            if (${isPresetStr}) {
+                seq = app.project.createNewSequence(${JSON.stringify(seqName)}, "");
+                if (!seq) { return "ERR:SEQ_FAILED"; }
+            } else {
+                var c0 = cuts[0];
+                var in0 = Math.max(0, c0.start - (handle / fps)); var out0 = c0.end + (handle / fps);
+                var tIn0 = new Time(); tIn0.seconds = in0; var tOut0 = new Time(); tOut0.seconds = out0;
+                clip.setInPoint(tIn0, 1); clip.setOutPoint(tOut0, 1);
+                
+                var autoSuccess = false;
+                try {
+                    seq = app.project.createNewSequenceFromClips(${JSON.stringify(seqName)}, [clip], app.project.rootItem);
+                    autoSuccess = true;
+                } catch(e) { seq = app.project.createNewSequence(${JSON.stringify(seqName)}, ""); }
+                if (!seq) { return "ERR:SEQ_FAILED"; }
+                
+                if (autoSuccess) {
+                    recSecs = out0 - in0; startIndex = 1;
+                    try { var placed = seq.videoTracks[0].clips[0]; if (placed && placed.linkedComponents) { for (var lc = 0; lc < placed.linkedComponents.numItems; lc++) { placed.linkedComponents[lc].muted = false; } } } catch(e) {}
+                } else { startIndex = 0; recSecs = 0; }
+            }
+
+            for (var i = startIndex; i < cuts.length; i++) {
+                var cut     = cuts[i];
+                var inSecs  = Math.max(0, cut.start - (handle / fps)); var outSecs = cut.end + (handle / fps);
+                var durSecs = outSecs - inSecs;
+
+                var inTime  = new Time(); inTime.seconds  = inSecs; var outTime = new Time(); outTime.seconds = outSecs;
+                clip.setInPoint(inTime,  1); clip.setOutPoint(outTime, 1);
+
+                var recTime = new Time(); recTime.seconds = recSecs;
+                seq.videoTracks[0].overwriteClip(clip, recTime);
+                
+                try { var placed2 = seq.videoTracks[0].clips[seq.videoTracks[0].clips.numItems - 1]; if (placed2 && placed2.linkedComponents) { for (var lc = 0; lc < placed2.linkedComponents.numItems; lc++) { placed2.linkedComponents[lc].muted = false; } } } catch(e) {}
+                
+                recSecs += durSecs;
+            }
+
+            try { var zeroTime = new Time(); zeroTime.seconds = 0; clip.setInPoint(zeroTime, 1); } catch(e) {}
+
+            if (${doMarkers}) {
+                var markerTime = 0;
+                for (var m=0; m < cuts.length; m++) {
+                    var mdur = (cuts[m].end + handle/fps) - Math.max(0, cuts[m].start - handle/fps);
+                    if (cuts[m].overlay) {
+                        var newMarker = seq.markers.createMarker(markerTime);
+                        newMarker.name = "Overlay Text"; newMarker.comments = cuts[m].overlay; newMarker.end = markerTime + mdur;
+                    }
+                    markerTime += mdur;
+                }
+            }
+
+            var srtPathVal = ${JSON.stringify(srtPath)};
+            if (srtPathVal !== "") { try { app.project.importFiles([srtPathVal], false, app.project.rootItem, false); } catch(e) {} }
+            return "OK:" + cuts.length;
+
+        } catch(e) { return "ERR:" + e.message; }
+    })();`;
+
+    cs.evalScript(jsx, function(result) {
+        document.getElementById('buildBtn').disabled = false;
+        
+        if (result === "EvalScript error.") { setStatus("Critical Error: Premiere API disconnected.", "err"); return; }
+
+        if (!result || result.indexOf('ERR:') === 0) {
+            var errMsg = result ? result.replace('ERR:', '') : 'No response from Premiere';
+            if (errMsg === 'CLIP_NOT_FOUND') { customAlert('Missing Clip', 'Could not locate the clip. Please browse for it again.'); } 
+            else if (errMsg === 'SEQ_FAILED') { customAlert('Failed', 'Could not create sequence. Make sure a project is open.'); } 
+            else { setStatus('Premiere script error: ' + errMsg, 'err'); }
+            return;
+        }
+        
+        if (result.indexOf('OK:') === 0) {
+            var count = result.replace('OK:', '');
+            var msg = count + ' cuts placed perfectly in your new sequence.';
+            if (srtPath || doMarkers === "true") {
+                msg += "\n\nAdditional Assets Generated:";
+                if (doMarkers === "true") msg += "\n• Timeline markers added.";
+                if (srtPath) msg += "\n• Captions file (.srt) has been placed in your Project Bin. Drag it to your timeline to style the text.";
+            }
+            customAlert("Sequence Built Successfully", msg);
+            setStatus('\u2713 Done \u2014 Sequence built.', 'ok');
+            document.getElementById('buildBtn').textContent = 'Build Again \u2014 ' + parsed.cuts.length + ' Cuts';
+        }
+    });
+}
+
+function setStatus(msg, cls) { var el = document.getElementById('status'); el.textContent = msg; el.className = cls || ''; }
+function refreshPanel() {
+    clipState = { detected: false, name: '', fps: 29.97, duration: 0, path: '', projPath: '' };
+    document.getElementById('clipDot').parentElement.className = 'clip-badge';
+    document.getElementById('clipName').textContent = 'No clip linked';
+    document.getElementById('clipMeta').textContent = 'Click Choose Video to select your file';
+    document.getElementById('scriptIn').value = ''; document.getElementById('scriptFile').value = '';
+    var disp = document.getElementById('fileNameDisplay'); disp.textContent = 'No file chosen'; disp.className = 'file-name-display';
+    document.getElementById('seqName').value = '';
+    var btn = document.getElementById('buildBtn'); btn.disabled = true; btn.textContent = 'Select Clip First';
+    document.getElementById('cutsWrap').style.display = 'none';
+    document.getElementById('chkSection3').checked = true;
+    document.getElementById('chkSection4').checked = true;
+    toggleSectionState();
+    document.getElementById('extractIn').value = 'Copy';
+    parsedCutsData = [];
+    setStatus('Panel refreshed — click Choose Video to begin.', '');
+}
+</script>
+</body>
+</html>
