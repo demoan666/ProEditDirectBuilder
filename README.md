@@ -28,42 +28,39 @@ Enable Debug Mode: On Windows, double-click the included Enable_Debug_Mode.reg f
 
 Follow the red numbered rectangles in the screenshots below to master the workflow.
 
-1. Select Source Video
+1. Select Source Media & Script
 
-Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).
+Click to refresh/ reload Tool (1)
+Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).  
+The tool displays the row count and parsing status in the box marked (3). 
 
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600" alt="Select Source Video">
+2. Build Operations
 
-2. Upload Your Script & Help
-
-Click Choose File to upload your script. The tool displays the row count and parsing status in the box marked (3). Click the ? HELP button to see the workflow and formatting tips.
-
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600" alt="Upload Script">
-
-3. Configure Build Settings
-
-Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) to add extra padding to every cut.
-
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Configure Build Settings">
-
-4. Text Extraction & Preview
-
-Enter the Extraction Keyword (7) for your captions. Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text before they are placed.
-
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Text Extraction and Preview">
+Enter Exclusion Keywords (4), to skip lines like "Delete". 
+Set your custom Sequence Name (it autofills with same name as the uploaded clip clip and adds suffix "_Edit") (5).
+Add Handle Frames (6) to add extra padding to every cut.
+Enter the Extraction Keyword (7) for your captions - it will look for this keyword in the document and "Colum Header" in spreadsheet documents. 
+Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text before they are placed.
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 
 5. Build Timeline
 
 Click the blue Build button. Choose Auto from Clip to create a sequence that matches your footage exactly, or Choose Preset for manual control.
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600">
 
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600" alt="Build Timeline">
+3. Pop-Ups and prompts to confirm actions and guide usage
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help05.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 
-📝 Client Script Formatting Best Practices
 
-Spreadsheets Are King: Ask clients for .xlsx files to ensure 100% data alignment.
+
+📝 Client Script Formatting Best Practices & Gotchas
+
+Spreadsheets Are King: .xlsx files to ensure 100% data alignment.
 
 One Row = One Cut: Ensure the Timecode and Copy live horizontally on the exact same row.
 
 Exact Column Names: If your column is named Text Layer, ensure you type Text Layer into the Extraction Keyword box.
 
-Built with ❤️ for rapid video production workflows.
+Built with ❤️ 
