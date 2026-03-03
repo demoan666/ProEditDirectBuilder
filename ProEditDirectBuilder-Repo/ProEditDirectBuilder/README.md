@@ -28,45 +28,45 @@ Enable Debug Mode: On Windows, double-click the included Enable_Debug_Mode.reg f
 
 Follow the red numbered rectangles in the screenshots below to master the workflow.
 
-1. Select Source Video & Help
+1. Select Source Media & Script
 
-Click Choose Video to link your footage. You can verify the file metadata in the clip badge (2). If you get stuck, click the ? Help button to view the guide modal.
+Click to refresh/reload Tool (1).
 
-<img src="assets/screenshots/help01.jpg" width="600" alt="Select Source Video">
+Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).
 
-2. Upload Your Script
+The tool displays the row count and parsing status in the box marked (3).
 
-Click Choose File to upload your script. Once loaded, the tool displays the row count and format type in the parsing status box (3).
+2. Build Operations
 
-<img src="assets/screenshots/help02.jpg" width="600" alt="Upload Script">
+Enter Exclusion Keywords (4) to skip lines like "Delete".
 
-3. Configure Exclusions & Handles
+Set your custom Sequence Name (5) (it autofills with the same name as the uploaded clip and adds the suffix "_Edit").
 
-Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) to add padding to every cut.
+Add Handle Frames (6) to add extra padding to every cut.
 
-<img src="assets/screenshots/help03.jpg" width="600" alt="Configure Exclusions and Handles">
+Enter the Extraction Keyword (7) for your captions—it will look for this keyword in the document and the "Column Header" in spreadsheet documents.
 
-4. Text Extraction Settings
+Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text before they are placed.
 
-Enter the exact column name or Extraction Keyword (7) from your script. Choose whether to generate markers, an SRT file, or both for your overlay text.
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 
-<img src="assets/screenshots/help04.jpg" width="600" alt="Set Extraction Keywords">
+3. Build Timeline
 
-5. Review the Editable Preview
+Click the blue Build button. Choose Auto from Clip to create a sequence that matches your footage exactly, or Choose Preset for manual control.
 
-Verify all cuts in the Editable Preview (9). You can change the In/Out points or edit the SRT text directly in the grid before building.
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600">
 
-<img src="assets/screenshots/help05.jpg" width="600" alt="Preview Grid">
+4. Pop-Ups and prompts to confirm actions and guide usage
 
-6. Build Timeline
+The tool includes several helpful prompts to guide you, such as the help manual and clip link confirmations.
 
-Click Build Selected Passes. Choose Auto from Clip to create a sequence that matches your source footage exactly, or Choose Preset for manual control.
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help03.jpg" width="600">
 
-<img src="assets/screenshots/help06.jpg" width="600" alt="Build Timeline">
+📝 Client Script Formatting Best Practices & Gotchas
 
-📝 Client Script Formatting Best Practices
-
-Spreadsheets Are King: Ask clients for .xlsx files to ensure 100% data alignment.
+Spreadsheets Are King: Use .xlsx files to ensure 100% data alignment.
 
 One Row = One Cut: Ensure the Timecode and Copy live horizontally on the exact same row.
 
