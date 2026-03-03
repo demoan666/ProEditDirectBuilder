@@ -30,26 +30,35 @@ Follow the red numbered rectangles in the screenshots below to master the workfl
 
 1. Select Source Media & Script
 
-Click to refresh/ reload Tool (1)
-Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).  
-The tool displays the row count and parsing status in the box marked (3). 
+Click to refresh/reload Tool (1).
+
+Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).
+
+The tool displays the row count and parsing status in the box marked (3).
 
 2. Build Operations
 
-Enter Exclusion Keywords (4), to skip lines like "Delete". 
-Set your custom Sequence Name (it autofills with same name as the uploaded clip clip and adds suffix "_Edit") (5).
+Enter Exclusion Keywords (4) to skip lines like "Delete".
+
+Set your custom Sequence Name (5) (it autofills with the same name as the uploaded clip and adds the suffix "_Edit").
+
 Add Handle Frames (6) to add extra padding to every cut.
-Enter the Extraction Keyword (7) for your captions - it will look for this keyword in the document and "Colum Header" in spreadsheet documents. 
+
+Enter the Extraction Keyword (7) for your captions—it will look for this keyword in the document and the "Column Header" in spreadsheet documents.
+
 Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text before they are placed.
 
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 
-5. Build Timeline
+3. Build Timeline
+
 Click the blue Build button. Choose Auto from Clip to create a sequence that matches your footage exactly, or Choose Preset for manual control.
 
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600">
 
-3. Pop-Ups and prompts to confirm actions and guide usage
+4. Pop-Ups and prompts to confirm actions and guide usage
+
+The tool includes several helpful prompts to guide you, such as the help manual and clip link confirmations.
 
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600">
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600">
