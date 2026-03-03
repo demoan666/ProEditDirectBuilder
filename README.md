@@ -41,14 +41,16 @@ Set your custom Sequence Name (it autofills with same name as the uploaded clip 
 Add Handle Frames (6) to add extra padding to every cut.
 Enter the Extraction Keyword (7) for your captions - it will look for this keyword in the document and "Colum Header" in spreadsheet documents. 
 Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text before they are placed.
+
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 
 5. Build Timeline
-
 Click the blue Build button. Choose Auto from Clip to create a sequence that matches your footage exactly, or Choose Preset for manual control.
+
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600">
 
 3. Pop-Ups and prompts to confirm actions and guide usage
+4. 
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help05.jpg" width="600">
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
