@@ -32,7 +32,7 @@ Follow the red numbered rectangles in the screenshots below to master the workfl
 
 Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).
 
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600" alt="Select Source Video">
+<img src="ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600" alt="Select Source Video">
 
 2. Upload Your Script & Help
 
