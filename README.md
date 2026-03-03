@@ -32,31 +32,31 @@ Follow the red numbered rectangles in the screenshots below to master the workfl
 
 Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).
 
-<img src="ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600" alt="Select Source Video">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600" alt="Select Source Video">
 
-2. Upload Your Script
+2. Upload Your Script & Help
 
-Click Choose File to upload your script (Excel, Word, or CSV). Once loaded, the tool displays the row count and parsing status in the box marked (3). If you need a refresher on the format, click the ? HELP button.
+Click Choose File to upload your script. The tool displays the row count and parsing status in the box marked (3). Click the ? HELP button to see the workflow and formatting tips.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600" alt="Upload Script">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600" alt="Upload Script">
 
 3. Configure Build Settings
 
-Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) if you need extra padding at the start and end of every cut.
+Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) to add extra padding to every cut.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Configure Build Settings">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Configure Build Settings">
 
 4. Text Extraction & Preview
 
-Enter the Extraction Keyword (7) to identify which column contains your captions. Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text.
+Enter the Extraction Keyword (7) for your captions. Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text before they are placed.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Text Extraction and Preview">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Text Extraction and Preview">
 
 5. Build Timeline
 
-Click the blue Build button. A modal will appear allowing you to choose Auto from Clip (matches footage settings) or Choose Preset for manual sequence control.
+Click the blue Build button. Choose Auto from Clip to create a sequence that matches your footage exactly, or Choose Preset for manual control.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600" alt="Build Timeline">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600" alt="Build Timeline">
 
 📝 Client Script Formatting Best Practices
 
