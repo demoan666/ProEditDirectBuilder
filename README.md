@@ -32,7 +32,7 @@ Follow the red numbered rectangles in the screenshots below to master the workfl
 
 Click Choose Video to link your footage. You can verify the file metadata in the clip badge (2). If you get stuck, click the ? Help button to view the guide modal.
 
-<img src="assets/screenshots/help01.jpg" width="600" alt="Select Source Video">
+<img src="ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600" alt="Select Source Video">
 
 2. Upload Your Script
 
