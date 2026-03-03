@@ -51,9 +51,9 @@ Click the blue Build button. Choose Auto from Clip to create a sequence that mat
 
 3. Pop-Ups and prompts to confirm actions and guide usage
 
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help05.jpg" width="600">
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
-<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600">
+<img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help03.jpg" width="600">
 
 
 
