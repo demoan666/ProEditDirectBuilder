@@ -50,7 +50,7 @@ Click the blue Build button. Choose Auto from Clip to create a sequence that mat
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600">
 
 3. Pop-Ups and prompts to confirm actions and guide usage
-4. 
+
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help05.jpg" width="600">
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
 <img src="ProEditDirectBuilder-Repo/ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600">
