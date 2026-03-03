@@ -28,39 +28,33 @@ Enable Debug Mode: On Windows, double-click the included Enable_Debug_Mode.reg f
 
 Follow the red numbered rectangles in the screenshots below to master the workflow.
 
-1. Select Source Video & Help
+1. Select Source Video
 
-Click Choose Video to link your footage. You can verify the file metadata in the clip badge (2). If you get stuck, click the ? Help button to view the guide modal.
+Click Choose Video to link your footage. Once linked, you can verify the file metadata, frame rate, and duration in the clip badge (2).
 
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Select Source Video">
+<img src="ProEditDirectBuilder/assets/screenshots/help02.jpg" width="600" alt="Select Source Video">
 
 2. Upload Your Script
 
-Click Choose File to upload your script. Once loaded, the tool displays the row count and format type in the parsing status box (3).
+Click Choose File to upload your script (Excel, Word, or CSV). Once loaded, the tool displays the row count and parsing status in the box marked (3). If you need a refresher on the format, click the ? HELP button.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Upload Script">
+<img src="ProEditDirectBuilder/assets/screenshots/help01.jpg" width="600" alt="Upload Script">
 
-3. Configure Exclusions & Handles
+3. Configure Build Settings
 
-Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) to add padding to every cut.
+Enter Exclusion Keywords (4) to skip lines like "Delete". Set your custom Sequence Name (5) and add Handle Frames (6) if you need extra padding at the start and end of every cut.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Configure Exclusions and Handles">
+<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Configure Build Settings">
 
-4. Text Extraction Settings
+4. Text Extraction & Preview
 
-Enter the exact column name or Extraction Keyword (7) from your script. Choose whether to generate markers, an SRT file, or both for your overlay text.
+Enter the Extraction Keyword (7) to identify which column contains your captions. Before building, review all cuts in the Editable Preview (9) where you can verify timecodes and SRT text.
 
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Set Extraction Keywords">
+<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Text Extraction and Preview">
 
-5. Review the Editable Preview
+5. Build Timeline
 
-Verify all cuts in the Editable Preview (9). You can change the In/Out points or edit the SRT text directly in the grid before building.
-
-<img src="ProEditDirectBuilder/assets/screenshots/help00.jpg" width="600" alt="Preview Grid">
-
-6. Build Timeline
-
-Click Build Selected Passes. Choose Auto from Clip to create a sequence that matches your source footage exactly, or Choose Preset for manual control.
+Click the blue Build button. A modal will appear allowing you to choose Auto from Clip (matches footage settings) or Choose Preset for manual sequence control.
 
 <img src="ProEditDirectBuilder/assets/screenshots/help04.jpg" width="600" alt="Build Timeline">
 
